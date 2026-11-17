@@ -106,7 +106,7 @@ public class DisaAktarimServisi {
                 if (v == null) {
                     s.add("");
                 } else if (v instanceof java.math.BigDecimal b) {
-                    s.add(b.toPlainString().replace('.', ','));
+                    s.add(b.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString().replace('.', ',')); // her zaman iki ondalık
                 } else if (v instanceof LocalDate d) {
                     s.add("%02d.%02d.%d".formatted(d.getDayOfMonth(), d.getMonthValue(), d.getYear()));
                 } else if (v instanceof java.time.LocalDateTime z) {

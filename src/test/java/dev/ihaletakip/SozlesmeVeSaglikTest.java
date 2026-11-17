@@ -63,7 +63,17 @@ class SozlesmeVeSaglikTest extends EntegrasyonTemeli {
                 .andExpect(status().isUnauthorized());
         mvc.perform(get("/api/ihaleler").header("Authorization", "Basic dXNlcjpwYXNz")).andExpect(status().isUnauthorized());
         String gecerli = giris("t_uzman");
-        mvc.perform(get("/api/ihaleler").header("Authorization", "Bearer " + gecerli + "x"))
+        // İmzanın ilk karakteri değiştirilir (sona karakter eklemek Base64 çözümlemede imzayı bozmaz)
+        int nokta = gecerli.lastIndexOf('.');
+        char ilk = gecerli.charAt(nokta + 1);
+        String bozukImza = gecerli.substring(0, nokta + 1) + (ilk == 'A' ? 'B' : 'A') + gecerli.substring(nokta + 2);
+        mvc.perform(get("/api/ihaleler").header("Authorization", "Bearer " + bozukImza))
+                .andExpect(status().isUnauthorized());
+        // Yük (payload) değiştirilirse imza artık uymaz
+        String[] parcalar = gecerli.split("\.");
+        String sahteYuk = java.util.Base64.getUrlEncoder().withoutPadding()
+                .encodeToString("{\"sub\":\"t_admin\",\"exp\":9999999999}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        mvc.perform(get("/api/kullanicilar").header("Authorization", "Bearer " + parcalar[0] + "." + sahteYuk + "." + parcalar[2]))
                 .andExpect(status().isUnauthorized());
     }
 

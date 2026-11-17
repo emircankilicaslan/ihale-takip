@@ -29,7 +29,7 @@ class DisaAktarimTest extends EntegrasyonTemeli {
         String icerik = new String(yanit.getContentAsByteArray(), StandardCharsets.UTF_8);
 
         assertThat(icerik).startsWith("﻿İhale no;Ad;Usul;Tür;Birim;Yaklaşık maliyet (TL);Durum");
-        assertThat(icerik).contains("Sunucu alımı", "Açık ihale", "Mal", "2000000.00".replace('.', ','), "Taslak");
+        assertThat(icerik).contains("Sunucu alımı", "Açık ihale", "Mal", "2000000,00", "Taslak");
     }
 
     @Test
