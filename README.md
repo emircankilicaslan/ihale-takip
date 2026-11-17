@@ -4,7 +4,9 @@ Kamu ihale süreçlerini baştan sona izleyen REST API: taslaktan sözleşmeye k
 
 **Java 21 · Spring Boot 3 · Oracle · Flyway · Spring Security (JWT + Active Directory) · JUnit 5**
 
-> **Durum:** Kod yazıldı, ancak henüz GitHub Actions üzerinde çalıştırılmadı. İlk CI sonucu yeşil olana kadar "çalışıyor" iddiası yoktur.
+[![CI](https://github.com/emircankilicaslan/ihale-takip/actions/workflows/ci.yml/badge.svg)](https://github.com/emircankilicaslan/ihale-takip/actions/workflows/ci.yml)
+
+> **Doğrulama:** Her push'ta GitHub Actions, Oracle Free servis konteynerine karşı 19 testi (birim ve uçtan uca akış) çalıştırır.
 >
 > **Mevzuat uyarısı:** Bu bir portfolyo/demo projesidir, hukuki danışmanlık değildir. Onay sınırları, ilan süreleri ve itiraz süresi **örnek değerlerdir** ve `application.yml` içinden ayarlanır; gerçek bir kurumda 4734 sayılı Kanun ve ilgili mevzuat ile doğrulanmalıdır. Kazanan seçimi "en düşük fiyat" olarak sadeleştirilmiştir.
 
