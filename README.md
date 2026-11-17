@@ -47,7 +47,10 @@ Uygulama açıldığında kök adres (`/`) bir çalışma paneli sunar. Derleme 
 ![Genel bakış: durum kartları ve ihale listesi](docs/screenshots/arayuz-genel-bakis.jpg)
 
 - **Genel bakış:** durum kartları (tıklayınca ilgili listeyi açar), devam eden ihalelerin toplam yaklaşık maliyeti; Excel ve CSV dışa aktarma
+- **Arama ve süzgeçler:** ihale no veya ada göre arama; durum, usul, tür, birim ve maliyet aralığı; sıralama. Süzgeçler sayfa değiştirince ve ihale detayından dönünce korunur, çıkışta sıfırlanır; dışa aktarma aynı süzgeçleri uygular
 - **Rol ve duruma göre işlemler:** onayla / geri çevir, ilan et, teklif ekle, kazanan seç, iptal. Yetki kararını her zaman sunucu verir; arayüz yalnızca uygun düğmeleri gösterir ve sunucunun hata mesajını olduğu gibi iletir. İtiraz süresi dolmadan sözleşme düğmesi pasif kalır
+
+![Arama ve süzgeçler: "yenileme" araması](docs/screenshots/arayuz-arama.jpg)
 
 ![Teklif değerlendirme: aşırı düşük teklif işaretli, komisyon kararları](docs/screenshots/arayuz-teklif-degerlendirme.jpg)
 
