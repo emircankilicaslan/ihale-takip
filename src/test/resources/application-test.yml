@@ -1,0 +1,3 @@
+ihale:
+  jwt:
+    gizli-anahtar: test-icin-uretilmis-en-az-32-baytlik-anahtar-degeri

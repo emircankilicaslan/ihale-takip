@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: ihale-takip
+  datasource:
+    url: ${DB_URL:jdbc:oracle:thin:@//localhost:1521/FREEPDB1}
+    username: ${DB_USER:ihale}
+    password: ${DB_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  jackson:
+    default-property-inclusion: non_null
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+ihale:
+  kimlik:
+    mod: ${KIMLIK_MODU:yerel}          # yerel | ldap
+    ad-domain: ${AD_DOMAIN:}           # ör. kurum.gov.tr
+    ldap-url: ${LDAP_URL:}             # ör. ldaps://dc.kurum.gov.tr:636
+  jwt:
+    gizli-anahtar: ${JWT_SECRET:}      # en az 32 bayt, ortam değişkeninden verilir
+    gecerlilik-dakika: 60
+  # Aşağıdaki sayısal değerler ÖRNEKTİR. Kurum, kendi mevzuat ve yetki devri
+  # düzenlemesine göre değiştirmelidir; koda gömülü kural yoktur.
+  kurallar:
+    onay-siniri-1: 500000        # bu tutara kadar 1. kademe (birim müdürü)
+    onay-siniri-2: 5000000       # bu tutara kadar 2. kademe (daire başkanı), üstü 3. kademe
+    asiri-dusuk-oran: 0.70       # teklif < yaklaşık maliyet x oran ise açıklama istenir
+    itiraz-suresi-gun: 10        # karar tarihinden itibaren takvim günü; bitiş tatile denk gelirse iş gününe uzar
+    ilan-suresi-gun:
+      ACIK: 15
+      BELLI_ISTEKLILER: 10
+      PAZARLIK: 5
