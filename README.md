@@ -9,7 +9,7 @@ Kamu ihale süreçlerini baştan sona izleyen REST API ve web arayüzü: taslakt
 
 ![Genel bakış](docs/screenshots/arayuz-genel-bakis.jpg)
 
-> **Doğrulama:** Her push'ta GitHub Actions, Oracle Free servis konteynerine karşı **248 test** (birim ve uçtan uca; parametrik testlerin her senaryosu ayrı sayılır) çalıştırır.
+> **Doğrulama:** Her push'ta GitHub Actions, Oracle Free servis konteynerine karşı **292 test** (birim ve uçtan uca; parametrik testlerin her senaryosu ayrı sayılır) çalıştırır.
 >
 > **Mevzuat uyarısı:** Bu bir portfolyo/demo projesidir, hukuki danışmanlık değildir. Onay sınırları, ilan süreleri ve itiraz süresi **örnek değerlerdir** ve `application.yml` içinden ayarlanır; gerçek bir kurumda 4734 sayılı Kanun ve ilgili mevzuat ile doğrulanmalıdır. Kazanan seçimi "en düşük fiyat" olarak sadeleştirilmiştir.
 
