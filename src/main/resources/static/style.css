@@ -184,3 +184,6 @@ button.ozet-kart:hover { border-color: var(--vurgu); filter: none; }
 .ozet-kart.secili { border-color: var(--vurgu); box-shadow: inset 0 0 0 1px var(--vurgu); }
 .ozet-etiket { color: var(--soluk); font-size: 13px; }
 .ozet-deger { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.rozet.durum-AKTIF { color: var(--basari); border-color: var(--basari); }
+.rozet.durum-PASIF { color: var(--soluk); }

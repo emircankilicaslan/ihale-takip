@@ -254,8 +254,11 @@ async function listeSayfasi(sayfa = 0, durum = '') {
   filtre.addEventListener('change', () => listeSayfasi(0, filtre.value).catch(hataGoster));
 
   const yeniMi = ['BIRIM_SORUMLUSU', 'SATIN_ALMA_UZMANI'].includes(oturum.rol);
+  const disaAktar = (bicim) => indir('/api/disa-aktar/ihaleler?bicim=' + bicim + (durum ? '&durum=' + durum : ''));
   const arac = el('div', { sinif: 'arac' }, filtre,
-    yeniMi && el('button', { type: 'button', sinif: 'bosluk', onclick: yeniIhale }, 'Yeni ihale'));
+    el('button', { type: 'button', sinif: 'ikincil kucuk bosluk', onclick: () => disaAktar('xlsx') }, 'Excel'),
+    el('button', { type: 'button', sinif: 'ikincil kucuk', onclick: () => disaAktar('csv') }, 'CSV'),
+    yeniMi && el('button', { type: 'button', onclick: yeniIhale }, 'Yeni ihale'));
 
   let govde;
   if (veri.content.length === 0) {
@@ -469,11 +472,110 @@ async function denetimSayfasi(ihaleId) {
         el('td', null, k.islem),
         el('td', null, k.varlikTuru + (k.varlikId != null ? ' #' + k.varlikId : '')),
         el('td', null, k.ayrinti || ''))))));
-  icerik().replaceChildren(
+  icerik().replaceChildren(...[
     ihaleId && el('p', null, el('a', { href: '#/ihale/' + ihaleId }, '← İhale')),
     el('h2', null, 'Denetim kaydı' + (ihaleId ? ' · ihale #' + ihaleId : '')),
     el('p', { sinif: 'soluk' }, 'Kayıtlar değiştirilemez ve silinemez. En yeni kayıtlar üstte.'),
+    !ihaleId && el('div', { sinif: 'arac' },
+      el('button', { type: 'button', sinif: 'ikincil kucuk', onclick: () => indir('/api/disa-aktar/denetim?bicim=xlsx') }, 'Excel'),
+      el('button', { type: 'button', sinif: 'ikincil kucuk', onclick: () => indir('/api/disa-aktar/denetim?bicim=csv') }, 'CSV')),
+    govde,
+  ].filter(Boolean));
+}
+
+async function kullanicilarSayfasi() {
+  if (oturum.rol !== 'ADMIN') {
+    icerik().replaceChildren(el('p', { sinif: 'bos kart' }, 'Bu sayfaya erişim yetkiniz yok.'));
+    return;
+  }
+  const liste = await api('/api/kullanicilar');
+  const birimler = await api('/api/birimler');
+  const birimSecenekleri = [['', '— birim yok —'], ...birimler.map((b) => [b.id, b.ad])];
+  const yenile = () => kullanicilarSayfasi().catch(hataGoster);
+
+  const yeni = async () => {
+    const d = await sor('Yeni kullanıcı', [
+      { ad: 'kullaniciAdi', etiket: 'Kullanıcı adı', tur: 'text' },
+      { ad: 'adSoyad', etiket: 'Ad soyad', tur: 'text' },
+      { ad: 'sifre', etiket: 'Başlangıç parolası (en az 10 karakter, harf ve rakam)', tur: 'password' },
+      { ad: 'rol', etiket: 'Rol', tur: 'select', secenekler: Object.entries(ROL) },
+      { ad: 'birimId', etiket: 'Birim (birim sorumlusu ve müdürü için zorunlu)', tur: 'select', zorunlu: false, secenekler: birimSecenekleri },
+    ]);
+    if (!d) return;
+    const tamam = await dene(() => api('/api/kullanicilar', { yontem: 'POST', govde: {
+      kullaniciAdi: d.kullaniciAdi, adSoyad: d.adSoyad, sifre: d.sifre, rol: d.rol,
+      birimId: d.birimId ? Number(d.birimId) : null } }), 'Kullanıcı oluşturuldu');
+    if (tamam) yenile();
+  };
+
+  const duzenle = async (k) => {
+    const mevcutBirim = birimler.find((b) => b.ad === k.birim);
+    const d = await sor('Kullanıcıyı düzenle: ' + k.kullaniciAdi, [
+      { ad: 'rol', etiket: 'Rol', tur: 'select', secenekler: Object.entries(ROL), deger: k.rol },
+      { ad: 'birimId', etiket: 'Birim', tur: 'select', zorunlu: false, secenekler: birimSecenekleri,
+        deger: mevcutBirim ? mevcutBirim.id : '' },
+      { ad: 'durum', etiket: 'Durum', tur: 'select', secenekler: [['AKTIF', 'Aktif'], ['PASIF', 'Pasif']], deger: k.durum },
+    ]);
+    if (!d) return;
+    const tamam = await dene(() => api('/api/kullanicilar/' + k.id, { yontem: 'PUT', govde: {
+      rol: d.rol, durum: d.durum, birimId: d.birimId ? Number(d.birimId) : null } }), 'Kullanıcı güncellendi');
+    if (tamam) yenile();
+  };
+
+  const kilitAc = async (k) => {
+    const tamam = await dene(() => api('/api/kullanicilar/' + k.id + '/kilit-ac', { yontem: 'POST' }), 'Kilit açıldı');
+    if (tamam) yenile();
+  };
+
+  const govde = el('div', { sinif: 'tablo-kap' }, el('table', null,
+    el('thead', null, el('tr', null, ['Kullanıcı adı', 'Ad soyad', 'Rol', 'Birim', 'Durum', 'İşlem'].map((b) => el('th', null, b)))),
+    el('tbody', null, liste.map((k) => el('tr', null,
+      el('td', null, k.kullaniciAdi),
+      el('td', null, k.adSoyad),
+      el('td', null, ROL[k.rol]),
+      el('td', null, k.birim || '-'),
+      el('td', null, rozet(k.durum === 'AKTIF' ? 'Aktif' : 'Pasif', 'durum-' + k.durum), ' ',
+        k.kilitli && rozet('Kilitli', 'uyari')),
+      el('td', null, el('div', { sinif: 'eylemler' },
+        el('button', { type: 'button', sinif: 'kucuk ikincil', onclick: () => duzenle(k) }, 'Düzenle'),
+        k.kilitli && el('button', { type: 'button', sinif: 'kucuk', onclick: () => kilitAc(k) }, 'Kilidi aç'))))))));
+
+  icerik().replaceChildren(
+    el('h2', null, 'Kullanıcılar'),
+    el('div', { sinif: 'arac' }, el('button', { type: 'button', sinif: 'bosluk', onclick: yeni }, 'Yeni kullanıcı')),
     govde);
+}
+
+async function parolaDegistir() {
+  const d = await sor('Parolamı değiştir', [
+    { ad: 'mevcutSifre', etiket: 'Mevcut parola', tur: 'password' },
+    { ad: 'yeniSifre', etiket: 'Yeni parola (en az 10 karakter, harf ve rakam)', tur: 'password' },
+  ]);
+  if (!d) return;
+  await dene(() => api('/api/auth/sifre-degistir', { yontem: 'POST', govde: d }), 'Parola değiştirildi');
+}
+
+/** Yetkili isteği yapıp yanıtı dosya olarak indirir (Authorization başlığı gerektiği için bağlantı kullanılamaz). */
+async function indir(yol) {
+  try {
+    const yanit = await fetch(yol, { headers: { Authorization: 'Bearer ' + oturum.token } });
+    if (!yanit.ok) {
+      const veri = await yanit.json().catch(() => null);
+      throw new Error((veri && veri.detail) || 'İndirme başarısız (' + yanit.status + ')');
+    }
+    const baslik = yanit.headers.get('Content-Disposition') || '';
+    const eslesme = baslik.match(/filename="?([^";]+)"?/);
+    const ad = eslesme ? eslesme[1] : 'dosya';
+    const url = URL.createObjectURL(await yanit.blob());
+    const baglanti = el('a', { href: url, download: ad });
+    document.body.append(baglanti);
+    baglanti.click();
+    baglanti.remove();
+    URL.revokeObjectURL(url);
+    bildir(ad + ' indirildi');
+  } catch (hata) {
+    bildir(hata.message, true);
+  }
 }
 
 // ----------------------------------------------------------------- yönlendirme
@@ -488,12 +590,13 @@ function ustuGuncelle() {
   document.getElementById('menu').hidden = !girisli;
   document.getElementById('kullanici').hidden = !girisli;
   document.getElementById('denetim-menu').hidden = !girisli || !DENETIM_OKUYAN.includes(oturum.rol);
+  document.getElementById('kullanicilar-menu').hidden = !girisli || oturum.rol !== 'ADMIN';
   if (girisli) {
     document.getElementById('kullanici-bilgi').textContent = oturum.adSoyad + ' · ' + ROL[oturum.rol];
   }
   const hash = location.hash || '#/';
   for (const d of document.querySelectorAll('.menu-dugme')) {
-    const hedef = d.dataset.sayfa === 'denetim' ? '#/denetim' : '#/';
+    const hedef = { denetim: '#/denetim', kullanicilar: '#/kullanicilar' }[d.dataset.sayfa] || '#/';
     d.classList.toggle('aktif', hash === hedef || (d.dataset.sayfa === 'liste' && hash.startsWith('#/ihale')));
   }
 }
@@ -506,13 +609,15 @@ function yonlendir() {
   let m;
   if ((m = hash.match(/^#\/ihale\/(\d+)$/))) is = detaySayfasi(m[1]);
   else if ((m = hash.match(/^#\/denetim(?:\/(\d+))?$/))) is = denetimSayfasi(m[1]);
+  else if (hash === '#/kullanicilar') is = kullanicilarSayfasi();
   else is = listeSayfasi();
   is.catch(hataGoster);
 }
 
 document.querySelectorAll('.menu-dugme').forEach((d) => {
-  d.addEventListener('click', () => git(d.dataset.sayfa === 'denetim' ? '#/denetim' : '#/'));
+  d.addEventListener('click', () => git({ denetim: '#/denetim', kullanicilar: '#/kullanicilar' }[d.dataset.sayfa] || '#/'));
 });
+document.getElementById('sifre-degistir').addEventListener('click', parolaDegistir);
 document.getElementById('cikis').addEventListener('click', () => {
   oturumuYaz(null);
   git('#/');

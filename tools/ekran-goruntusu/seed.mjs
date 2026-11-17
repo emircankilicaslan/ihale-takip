@@ -115,5 +115,14 @@ await teklif(sunucu, 'Marmara Bilişim Altyapı A.Ş.', '7894561230', 2150000);
 await teklif(sunucu, 'Ege Teknoloji Sistemleri Ltd. Şti.', '3216549870', 2390000);
 await api('POST', `/api/ihaleler/${sunucu}/degerlendirmeye-al`, t.uzman);
 
+// 8) Kilitli hesap örneği: art arda 5 hatalı giriş (kullanıcı yönetimi ekranında "Kilitli" rozeti görünür)
+for (let i = 0; i < 5; i++) {
+  const y = await fetch(BASE + '/api/auth/giris', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ kullaniciAdi: 'mudur', sifre: 'bilerek-yanlis-parola-1' }),
+  });
+  if (y.status !== 401) throw new Error('Hatalı giriş 401 dönmedi: ' + y.status);
+}
+
 writeFileSync(new URL('./kimlikler.json', import.meta.url), JSON.stringify(kimlikler, null, 2));
 console.log('Örnek veri yüklendi:', kimlikler);

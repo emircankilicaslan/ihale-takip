@@ -116,4 +116,27 @@ async function cek(sayfa, ad, secenek = {}) {
   await s.context().close();
 }
 
+// 10) Kullanıcı yönetimi (yönetici): bir hesap kilitli
+{
+  const s = await baglam();
+  await girisYap(s, 'admin');
+  await git(s, '#/kullanicilar', 'text=Yeni kullanıcı');
+  await cek(s, 'arayuz-kullanicilar', { fullPage: true });
+  await s.click('text=Yeni kullanıcı');
+  await s.fill('#alan-kullaniciAdi', 'ayse.demir');
+  await s.fill('#alan-adSoyad', 'Ayşe Demir');
+  await cek(s, 'arayuz-yeni-kullanici');
+  await s.context().close();
+}
+
+// 11) Swagger arayüzü
+{
+  const s = await baglam({ viewport: { width: 1280, height: 1100 } });
+  await s.goto(BASE + '/swagger');
+  await s.waitForSelector('.swagger-ui .opblock-tag');
+  await s.waitForLoadState('networkidle');
+  await cek(s, 'arayuz-swagger');
+  await s.context().close();
+}
+
 await tarayici.close();
