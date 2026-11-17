@@ -28,7 +28,11 @@ public class GuvenlikAyari {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(a -> a
                         .requestMatchers("/api/auth/giris", "/actuator/health").permitAll()
+                        // Arayüz dosyaları herkese açıktır; veri yalnızca /api üzerinden ve oturumla gelir.
+                        .requestMatchers("/", "/index.html", "/app.js", "/style.css", "/favicon.ico").permitAll()
                         .anyRequest().authenticated())
+                .headers(h -> h.contentSecurityPolicy(
+                        c -> c.policyDirectives("default-src 'self'; frame-ancestors 'none'; base-uri 'self'")))
                 .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .addFilterBefore(jwtFiltresi, UsernamePasswordAuthenticationFilter.class);
         return http.build();

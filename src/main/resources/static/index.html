@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>İhale Takip</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="ust">
+    <h1>İhale Takip</h1>
+    <nav id="menu" hidden>
+      <button type="button" data-sayfa="liste" class="menu-dugme">İhaleler</button>
+      <button type="button" data-sayfa="denetim" class="menu-dugme" id="denetim-menu" hidden>Denetim kaydı</button>
+    </nav>
+    <div id="kullanici" class="kullanici" hidden>
+      <span id="kullanici-bilgi"></span>
+      <button type="button" id="cikis" class="ikincil">Çıkış</button>
+    </div>
+  </header>
+
+  <main id="icerik" tabindex="-1"></main>
+  <div id="bildirim" role="status" aria-live="polite" class="bildirim" hidden></div>
+
+  <dialog id="iletisim">
+    <form method="dialog" id="iletisim-form">
+      <h2 id="iletisim-baslik"></h2>
+      <div id="iletisim-alanlar"></div>
+      <menu>
+        <button type="button" id="iletisim-iptal" class="ikincil">Vazgeç</button>
+        <button type="submit" id="iletisim-tamam">Tamam</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script src="/app.js"></script>
+</body>
+</html>

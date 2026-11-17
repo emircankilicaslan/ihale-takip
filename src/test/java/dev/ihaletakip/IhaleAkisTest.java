@@ -235,6 +235,19 @@ class IhaleAkisTest {
     }
 
     @Test
+    void arayuzDosyalariAcikAmaVeriKorumalidir() throws Exception {
+        mvc.perform(get("/")).andExpect(status().isOk());
+        mvc.perform(get("/app.js")).andExpect(status().isOk());
+        mvc.perform(get("/style.css")).andExpect(status().isOk());
+        mvc.perform(get("/api/birimler")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/birimler").header("Authorization", "Bearer " + giris("t_uzman")))
+                .andExpect(status().isOk()).andExpect(jsonPath("$[?(@.kod == 'BIDB')]").exists());
+        mvc.perform(get("/")).andExpect(
+                org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
+                        .string("Content-Security-Policy", org.hamcrest.Matchers.containsString("default-src 'self'")));
+    }
+
+    @Test
     void yanlisParolaDetaysizReddedilir() throws Exception {
         mvc.perform(post("/api/auth/giris").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"kullaniciAdi\":\"t_sorumlu\",\"sifre\":\"yanlis\"}"))

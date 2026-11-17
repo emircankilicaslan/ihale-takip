@@ -1,12 +1,12 @@
 # ihale-takip
 
-Kamu ihale süreçlerini baştan sona izleyen REST API: taslaktan sözleşmeye kadar durum akışı, tutara göre onay kademeleri, iş günü ve resmi tatil bilen süre hesabı, rol ve birim bazlı yetki ve değiştirilemez denetim kaydı.
+Kamu ihale süreçlerini baştan sona izleyen REST API ve web arayüzü: taslaktan sözleşmeye kadar durum akışı, tutara göre onay kademeleri, iş günü ve resmi tatil bilen süre hesabı, rol ve birim bazlı yetki ve değiştirilemez denetim kaydı.
 
 **Java 21 · Spring Boot 3 · Oracle · Flyway · Spring Security (JWT + Active Directory) · JUnit 5**
 
 [![CI](https://github.com/emircankilicaslan/ihale-takip/actions/workflows/ci.yml/badge.svg)](https://github.com/emircankilicaslan/ihale-takip/actions/workflows/ci.yml)
 
-> **Doğrulama:** Her push'ta GitHub Actions, Oracle Free servis konteynerine karşı 19 testi (birim ve uçtan uca akış) çalıştırır.
+> **Doğrulama:** Her push'ta GitHub Actions, Oracle Free servis konteynerine karşı 20 testi (birim ve uçtan uca akış) çalıştırır.
 >
 > **Mevzuat uyarısı:** Bu bir portfolyo/demo projesidir, hukuki danışmanlık değildir. Onay sınırları, ilan süreleri ve itiraz süresi **örnek değerlerdir** ve `application.yml` içinden ayarlanır; gerçek bir kurumda 4734 sayılı Kanun ve ilgili mevzuat ile doğrulanmalıdır. Kazanan seçimi "en düşük fiyat" olarak sadeleştirilmiştir.
 
@@ -83,6 +83,16 @@ curl -X POST localhost:8080/api/auth/giris -H "Content-Type: application/json" \
      -d '{"kullaniciAdi":"sorumlu","sifre":"<DEMO_SIFRE>"}'
 ```
 
+## Web arayüzü
+
+Uygulama açıldığında (`http://localhost:8080`) tarayıcıdan kullanılabilir. Derleme adımı ve dış kütüphane yoktur: düz HTML/CSS/JS, Spring Boot içinden servis edilir.
+
+- Giriş, durum filtreli ve sayfalı ihale listesi, ihale detayı
+- Rol ve duruma göre görünen işlem düğmeleri (onayla, ilan et, teklif ekle, kazanan seç, iptal...). Yetki kararını her zaman sunucu verir; arayüz yalnızca uygun düğmeleri gösterir ve sunucunun hata mesajını iletir
+- Teklif tablosu: aşırı düşük teklif rozeti, komisyon kararları
+- Denetçi, yönetici ve üst yönetici için denetim kaydı sayfası
+- Gizlilik: metinler `textContent` ile yazılır (XSS'e karşı), `Content-Security-Policy` yalnızca kendi kaynağına izin verir, oturum anahtarı sekme kapanınca silinir (`sessionStorage`), koyu tema ve dar ekran desteği vardır
+
 ## Test
 
 `mvn verify`: birim testleri (iş günü ve kural hesapları) ve Oracle'a karşı uçtan uca akış testi. Akış testi saati ileri alarak ilan, teklif, itiraz süresi ve sözleşme adımlarını gerçek veritabanı ve güvenlik zinciriyle sınar. CI, GitHub Actions'ta bir Oracle Free servis konteyneri kullanır.
@@ -110,4 +120,4 @@ curl -X POST localhost:8080/api/auth/giris -H "Content-Type: application/json" \
 
 ## Kapsam dışı
 
-Arayüz, e-imza/EKAP entegrasyonu, belge yükleme ve mevzuatın tam modellenmesi bu sürümde yoktur.
+E-imza/EKAP entegrasyonu, belge yükleme ve mevzuatın tam modellenmesi bu sürümde yoktur.
