@@ -54,9 +54,9 @@ public class DisaAktarimServisi {
         this.clock = clock;
     }
 
-    public Dosya ihaleler(Kullanici k, IhaleDurumu durum, String bicim) {
-        var sayfa = PageRequest.of(0, EN_COK_SATIR, Sort.by(Sort.Direction.DESC, "id"));
-        List<IhaleYaniti> liste = ihaleler.listele(k, durum, sayfa).getContent();
+    public Dosya ihaleler(Kullanici k, IhaleFiltre filtre, Siralama siralama, String bicim) {
+        var sayfa = PageRequest.of(0, EN_COK_SATIR, siralama.sort());
+        List<IhaleYaniti> liste = ihaleler.listele(k, filtre, sayfa).getContent();
 
         List<String> baslik = List.of("İhale no", "Ad", "Usul", "Tür", "Birim", "Yaklaşık maliyet (TL)", "Durum",
                 "Onay kademesi", "İlan tarihi", "İhale tarihi", "Oluşturan", "Onaylayan", "Karar zamanı");

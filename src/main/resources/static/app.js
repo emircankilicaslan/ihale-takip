@@ -45,6 +45,10 @@ function oturumuOku() {
 
 function oturumuYaz(deger) {
   oturum = deger;
+  if (!deger) {
+    suzgec = { ...BOS_SUZGEC }; // çıkışta liste süzgeçleri sıfırlanır
+    listeSayfa = 0;
+  }
   try {
     if (deger) sessionStorage.setItem('oturum', JSON.stringify(deger));
     else sessionStorage.removeItem('oturum');
@@ -227,18 +231,53 @@ function girisSayfasi() {
   document.getElementById('ka').focus();
 }
 
-async function listeSayfasi(sayfa = 0, durum = '') {
-  const yol = '/api/ihaleler?size=' + SAYFA_BOYUTU + '&page=' + sayfa + (durum ? '&durum=' + durum : '');
-  const [veri, ozet] = await Promise.all([api(yol), api('/api/ihaleler/ozet')]);
+/** Liste ekranının süzgeç durumu; sayfa değişse de korunur. */
+const BOS_SUZGEC = { ara: '', durum: '', usul: '', tur: '', birimId: '', minMaliyet: '', maxMaliyet: '', sirala: 'YENI' };
+let suzgec = { ...BOS_SUZGEC };
+let listeSayfa = 0;
+
+const SIRALAMA = {
+  YENI: 'En yeni önce',
+  ESKI: 'En eski önce',
+  MALIYET_AZALAN: 'Maliyet: çoktan aza',
+  MALIYET_ARTAN: 'Maliyet: azdan çoğa',
+  IHALE_TARIHI: 'İhale tarihi yaklaşana göre',
+};
+
+/** Süzgeci sorgu dizesine çevirir; boş alanlar eklenmez. */
+function suzgecSorgusu(ek = {}) {
+  const parametreler = new URLSearchParams();
+  for (const [anahtar, deger] of Object.entries({ ...suzgec, ...ek })) {
+    if (deger !== '' && deger != null) parametreler.set(anahtar, deger);
+  }
+  return parametreler.toString();
+}
+
+function suzgecAktifMi() {
+  return Object.keys(BOS_SUZGEC).some((anahtar) => suzgec[anahtar] !== BOS_SUZGEC[anahtar]);
+}
+
+async function listeSayfasi(sayfa = listeSayfa) {
+  listeSayfa = sayfa;
+  const birimler = oturum.rol === 'BIRIM_SORUMLUSU' || oturum.rol === 'BIRIM_MUDURU' ? [] : await api('/api/birimler');
+  const [veri, ozet] = await Promise.all([
+    api('/api/ihaleler?' + suzgecSorgusu({ size: SAYFA_BOYUTU, page: sayfa })),
+    api('/api/ihaleler/ozet'),
+  ]);
+
+  const yenile = (degisiklik = {}) => {
+    suzgec = { ...suzgec, ...degisiklik };
+    return listeSayfasi(0).catch(hataGoster);
+  };
 
   const kart = (etiket, deger, hedefDurum) => {
     const icerikKart = [el('span', { sinif: 'ozet-etiket' }, etiket), el('span', { sinif: 'ozet-deger' }, deger)];
     if (hedefDurum === undefined) return el('div', { sinif: 'ozet-kart' }, icerikKart);
     return el('button', {
       type: 'button',
-      sinif: 'ozet-kart' + (hedefDurum === durum ? ' secili' : ''),
-      'aria-pressed': hedefDurum === durum ? 'true' : 'false',
-      onclick: () => listeSayfasi(0, hedefDurum).catch(hataGoster),
+      sinif: 'ozet-kart' + (hedefDurum === suzgec.durum ? ' secili' : ''),
+      'aria-pressed': hedefDurum === suzgec.durum ? 'true' : 'false',
+      onclick: () => yenile({ durum: hedefDurum }),
     }, icerikKart);
   };
   const ozetKartlari = el('div', { sinif: 'ozet' },
@@ -248,21 +287,55 @@ async function listeSayfasi(sayfa = 0, durum = '') {
     kart('Değerlendirmede', ozet.durumlar.DEGERLENDIRMEDE, 'DEGERLENDIRMEDE'),
     kart('Devam eden ihalelerin yaklaşık maliyeti', para.format(ozet.devamEdenYaklasikMaliyet)));
 
-  const filtre =el('select', { 'aria-label': 'Duruma göre filtrele' },
-    el('option', { value: '' }, 'Tüm durumlar'),
-    Object.entries(DURUM).map(([k, v]) => el('option', { value: k, selected: k === durum }, v)));
-  filtre.addEventListener('change', () => listeSayfasi(0, filtre.value).catch(hataGoster));
+  // ---- arama ve süzgeçler
+  const secim = (etiket, alan, secenekler) => {
+    const s = el('select', { 'aria-label': etiket },
+      el('option', { value: '' }, etiket),
+      secenekler.map(([k, v]) => el('option', { value: k, selected: String(k) === String(suzgec[alan]) }, v)));
+    s.addEventListener('change', () => yenile({ [alan]: s.value }));
+    return s;
+  };
+  const sayiAlani = (etiket, alan) => {
+    const g = el('input', { type: 'number', min: '0', step: '1', placeholder: etiket, 'aria-label': etiket,
+      value: suzgec[alan], sinif: 'sayi-girdi' });
+    g.addEventListener('change', () => yenile({ [alan]: g.value }));
+    return g;
+  };
+
+  const araGirdi = el('input', { type: 'search', placeholder: 'İhale no veya ad ara…', 'aria-label': 'İhale no veya ad ara',
+    value: suzgec.ara, maxlength: '100', sinif: 'ara-girdi' });
+  const araFormu = el('form', { sinif: 'ara-formu', role: 'search' }, araGirdi,
+    el('button', { type: 'submit', sinif: 'kucuk' }, 'Ara'));
+  araFormu.addEventListener('submit', (olay) => {
+    olay.preventDefault();
+    yenile({ ara: araGirdi.value.trim() });
+  });
+
+  const siralama = el('select', { 'aria-label': 'Sıralama' },
+    Object.entries(SIRALAMA).map(([k, v]) => el('option', { value: k, selected: k === suzgec.sirala }, v)));
+  siralama.addEventListener('change', () => yenile({ sirala: siralama.value }));
+
+  const suzgecSatiri = el('div', { sinif: 'arac' },
+    secim('Tüm durumlar', 'durum', Object.entries(DURUM)),
+    secim('Tüm usuller', 'usul', Object.entries(USUL)),
+    secim('Tüm türler', 'tur', Object.entries(TUR)),
+    birimler.length > 0 && secim('Tüm birimler', 'birimId', birimler.map((b) => [b.id, b.ad])),
+    sayiAlani('En az TL', 'minMaliyet'),
+    sayiAlani('En çok TL', 'maxMaliyet'),
+    siralama,
+    suzgecAktifMi() && el('button', { type: 'button', sinif: 'ikincil kucuk',
+      onclick: () => { suzgec = { ...BOS_SUZGEC }; listeSayfasi(0).catch(hataGoster); } }, 'Süzgeçleri temizle'));
 
   const yeniMi = ['BIRIM_SORUMLUSU', 'SATIN_ALMA_UZMANI'].includes(oturum.rol);
-  const disaAktar = (bicim) => indir('/api/disa-aktar/ihaleler?bicim=' + bicim + (durum ? '&durum=' + durum : ''));
-  const arac = el('div', { sinif: 'arac' }, filtre,
+  const disaAktar = (bicim) => indir('/api/disa-aktar/ihaleler?' + suzgecSorgusu({ bicim }));
+  const aracSatiri = el('div', { sinif: 'arac' }, araFormu,
     el('button', { type: 'button', sinif: 'ikincil kucuk bosluk', onclick: () => disaAktar('xlsx') }, 'Excel'),
     el('button', { type: 'button', sinif: 'ikincil kucuk', onclick: () => disaAktar('csv') }, 'CSV'),
     yeniMi && el('button', { type: 'button', onclick: yeniIhale }, 'Yeni ihale'));
 
   let govde;
   if (veri.content.length === 0) {
-    govde = el('p', { sinif: 'bos kart' }, 'Kayıt bulunamadı.');
+    govde = el('p', { sinif: 'bos kart' }, suzgecAktifMi() ? 'Bu süzgeçlere uyan ihale yok.' : 'Kayıt bulunamadı.');
   } else {
     govde = el('div', { sinif: 'tablo-kap' }, el('table', null,
       el('thead', null, el('tr', null,
@@ -284,12 +357,12 @@ async function listeSayfasi(sayfa = 0, durum = '') {
   const sayfalama = el('div', { sinif: 'sayfalama' },
     el('span', null, 'Toplam ' + veri.totalElements + ' kayıt'),
     el('button', { type: 'button', sinif: 'ikincil kucuk', disabled: veri.first,
-      onclick: () => listeSayfasi(sayfa - 1, durum).catch(hataGoster) }, 'Önceki'),
+      onclick: () => listeSayfasi(sayfa - 1).catch(hataGoster) }, 'Önceki'),
     el('span', null, (sayfa + 1) + ' / ' + Math.max(veri.totalPages, 1)),
     el('button', { type: 'button', sinif: 'ikincil kucuk', disabled: veri.last,
-      onclick: () => listeSayfasi(sayfa + 1, durum).catch(hataGoster) }, 'Sonraki'));
+      onclick: () => listeSayfasi(sayfa + 1).catch(hataGoster) }, 'Sonraki'));
 
-  icerik().replaceChildren(el('h2', null, 'İhaleler'), ozetKartlari, arac, govde, sayfalama);
+  icerik().replaceChildren(el('h2', null, 'İhaleler'), ozetKartlari, aracSatiri, suzgecSatiri, govde, sayfalama);
 }
 
 async function yeniIhale() {

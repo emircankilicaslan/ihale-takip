@@ -1,15 +1,18 @@
 package dev.ihaletakip.web;
 
 import dev.ihaletakip.domain.IhaleDurumu;
+import dev.ihaletakip.domain.IhaleTuru;
+import dev.ihaletakip.domain.IhaleUsulu;
 import dev.ihaletakip.guvenlik.KullaniciDetay;
+import dev.ihaletakip.servis.IhaleFiltre;
 import dev.ihaletakip.servis.IhaleServisi;
+import dev.ihaletakip.servis.Siralama;
 import dev.ihaletakip.web.Dto.*;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,10 +29,23 @@ public class IhaleController {
     }
 
     @GetMapping
+    @io.swagger.v3.oas.annotations.Operation(summary = "İhale listesi",
+            description = "Arama ve süzgeçler birlikte uygulanır. Birim ile sınırlı roller yalnızca kendi birimini görür. "
+                    + "Sayfa boyutu en çok 100'dür.")
     public Page<IhaleYaniti> listele(@AuthenticationPrincipal KullaniciDetay k,
+                                     @RequestParam(required = false) String ara,
                                      @RequestParam(required = false) IhaleDurumu durum,
-                                     @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable sayfa) {
-        return servis.listele(k.kullanici(), durum, sayfa);
+                                     @RequestParam(required = false) IhaleUsulu usul,
+                                     @RequestParam(required = false) IhaleTuru tur,
+                                     @RequestParam(required = false) Long birimId,
+                                     @RequestParam(required = false) java.math.BigDecimal minMaliyet,
+                                     @RequestParam(required = false) java.math.BigDecimal maxMaliyet,
+                                     @RequestParam(defaultValue = "YENI") Siralama sirala,
+                                     @RequestParam(defaultValue = "0") int page,
+                                     @RequestParam(defaultValue = "20") int size) {
+        Pageable sayfa = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100), sirala.sort());
+        var filtre = new IhaleFiltre(ara, durum, usul, tur, birimId, minMaliyet, maxMaliyet);
+        return servis.listele(k.kullanici(), filtre, sayfa);
     }
 
     @GetMapping("/ozet")

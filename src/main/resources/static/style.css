@@ -187,3 +187,7 @@ button.ozet-kart:hover { border-color: var(--vurgu); filter: none; }
 
 .rozet.durum-AKTIF { color: var(--basari); border-color: var(--basari); }
 .rozet.durum-PASIF { color: var(--soluk); }
+
+.ara-formu { display: flex; gap: 8px; flex: 1; min-width: 220px; max-width: 420px; }
+.arac .ara-girdi { width: 100%; }
+.arac .sayi-girdi { width: 130px; }

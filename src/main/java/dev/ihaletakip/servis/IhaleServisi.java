@@ -59,9 +59,9 @@ public class IhaleServisi {
     // ---------------------------------------------------------------- okuma
 
     @Transactional(readOnly = true)
-    public Page<IhaleYaniti> listele(Kullanici k, IhaleDurumu durum, Pageable sayfa) {
+    public Page<IhaleYaniti> listele(Kullanici k, IhaleFiltre filtre, Pageable sayfa) {
         IsGunuTakvimi takvim = takvim();
-        return ihaleler.findAll(kapsam(k, durum), sayfa).map(i -> yanit(i, takvim));
+        return ihaleler.findAll(kapsam(k, filtre), sayfa).map(i -> yanit(i, takvim));
     }
 
     /** Durumlara göre adetler ve devam eden ihalelerin toplam yaklaşık maliyeti; kullanıcının görebildiği kayıtlar üzerinden. */
@@ -73,7 +73,7 @@ public class IhaleServisi {
         }
         BigDecimal devamEden = BigDecimal.ZERO;
         long toplam = 0;
-        for (Ihale i : ihaleler.findAll(kapsam(k, null))) {
+        for (Ihale i : ihaleler.findAll(kapsam(k, IhaleFiltre.BOS))) {
             toplam++;
             durumlar.merge(i.getDurum(), 1L, Long::sum);
             if (!i.getDurum().sonDurum()) {
@@ -84,11 +84,37 @@ public class IhaleServisi {
     }
 
     /** Birim ile sınırlı roller yalnızca kendi birimini görür; isteğe bağlı durum filtresi. */
-    private Specification<Ihale> kapsam(Kullanici k, IhaleDurumu durum) {
+    private Specification<Ihale> kapsam(Kullanici k, IhaleFiltre f) {
         return (kok, sorgu, cb) -> {
             List<Predicate> p = new ArrayList<>();
-            if (durum != null) {
-                p.add(cb.equal(kok.get("durum"), durum));
+            if (f.durum() != null) {
+                p.add(cb.equal(kok.get("durum"), f.durum()));
+            }
+            if (f.usul() != null) {
+                p.add(cb.equal(kok.get("usul"), f.usul()));
+            }
+            if (f.tur() != null) {
+                p.add(cb.equal(kok.get("tur"), f.tur()));
+            }
+            if (f.birimId() != null) {
+                p.add(cb.equal(kok.get("birim").get("id"), f.birimId()));
+            }
+            if (f.minMaliyet() != null) {
+                p.add(cb.greaterThanOrEqualTo(kok.<BigDecimal>get("yaklasikMaliyet"), f.minMaliyet()));
+            }
+            if (f.maxMaliyet() != null) {
+                p.add(cb.lessThanOrEqualTo(kok.<BigDecimal>get("yaklasikMaliyet"), f.maxMaliyet()));
+            }
+            if (f.ara() != null && !f.ara().isBlank()) {
+                String metin = f.ara().strip();
+                if (metin.length() > IhaleFiltre.EN_COK_ARAMA_UZUNLUGU) {
+                    metin = metin.substring(0, IhaleFiltre.EN_COK_ARAMA_UZUNLUGU);
+                }
+                // LIKE joker karakterleri (% ve _) ve kaçış karakteri kullanıcı girdisinde düz metin sayılır
+                String kalip = "%" + metin.toLowerCase(java.util.Locale.ROOT)
+                        .replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
+                p.add(cb.or(cb.like(cb.lower(kok.<String>get("ad")), kalip, '\\'),
+                        cb.like(cb.lower(kok.<String>get("ihaleNo")), kalip, '\\')));
             }
             if (k.getRol().birimleSinirli()) {
                 if (k.getBirim() == null) {

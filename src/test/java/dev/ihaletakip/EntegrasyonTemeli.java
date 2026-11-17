@@ -112,6 +112,18 @@ abstract class EntegrasyonTemeli {
         return mvc.perform(get(yol).header("Authorization", "Bearer " + giris(kullanici)));
     }
 
+    /**
+     * Sorgu parametrelerini ham değerle gönderir (URL'e elle kodlanmış metin yazılmaz; MockMvc kodlamayı kendisi yapar).
+     * Parametreler ad, değer, ad, değer biçiminde verilir.
+     */
+    protected ResultActions alSorgu(String kullanici, String yol, String... adDeger) throws Exception {
+        var istek = get(yol).header("Authorization", "Bearer " + giris(kullanici));
+        for (int i = 0; i + 1 < adDeger.length; i += 2) {
+            istek.param(adDeger[i], adDeger[i + 1]);
+        }
+        return mvc.perform(istek);
+    }
+
     protected String govde(ResultActions sonuc) throws Exception {
         return sonuc.andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
     }
@@ -122,6 +134,14 @@ abstract class EntegrasyonTemeli {
         String yanit = govde(gonder(kullanici, "/api/ihaleler", """
                 {"ad":"Sunucu alımı","usul":"ACIK","tur":"MAL","yaklasikMaliyet":%s}""".formatted(maliyet))
                 .andExpect(status().isCreated()));
+        return ((Number) JsonPath.read(yanit, "$.id")).longValue();
+    }
+
+    /** Satın alma uzmanı olarak, verilen özelliklerle ihale oluşturur (arama ve süzgeç testleri için). */
+    protected long ihaleOlustur(String ad, String usul, String tur, String maliyet, long birimId) throws Exception {
+        String govde = """
+                {"ad":"%s","usul":"%s","tur":"%s","yaklasikMaliyet":%s,"birimId":%d}""".formatted(ad, usul, tur, maliyet, birimId);
+        String yanit = govde(gonder("t_uzman", "/api/ihaleler", govde).andExpect(status().isCreated()));
         return ((Number) JsonPath.read(yanit, "$.id")).longValue();
     }
 

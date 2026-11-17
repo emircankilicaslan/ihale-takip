@@ -1,6 +1,10 @@
 package dev.ihaletakip.web;
 
 import dev.ihaletakip.domain.IhaleDurumu;
+import dev.ihaletakip.domain.IhaleTuru;
+import dev.ihaletakip.domain.IhaleUsulu;
+import dev.ihaletakip.servis.IhaleFiltre;
+import dev.ihaletakip.servis.Siralama;
 import dev.ihaletakip.guvenlik.KullaniciDetay;
 import dev.ihaletakip.servis.DisaAktarimServisi;
 import dev.ihaletakip.servis.DisaAktarimServisi.Dosya;
@@ -29,8 +33,16 @@ public class DisaAktarimController {
     @GetMapping("/ihaleler")
     public ResponseEntity<byte[]> ihaleler(@AuthenticationPrincipal KullaniciDetay k,
                                            @RequestParam(defaultValue = "xlsx") String bicim,
-                                           @RequestParam(required = false) IhaleDurumu durum) {
-        return yanit(servis.ihaleler(k.kullanici(), durum, bicim));
+                                           @RequestParam(required = false) String ara,
+                                           @RequestParam(required = false) IhaleDurumu durum,
+                                           @RequestParam(required = false) IhaleUsulu usul,
+                                           @RequestParam(required = false) IhaleTuru tur,
+                                           @RequestParam(required = false) Long birimId,
+                                           @RequestParam(required = false) java.math.BigDecimal minMaliyet,
+                                           @RequestParam(required = false) java.math.BigDecimal maxMaliyet,
+                                           @RequestParam(defaultValue = "YENI") Siralama sirala) {
+        var filtre = new IhaleFiltre(ara, durum, usul, tur, birimId, minMaliyet, maxMaliyet);
+        return yanit(servis.ihaleler(k.kullanici(), filtre, sirala, bicim));
     }
 
     @GetMapping("/denetim")

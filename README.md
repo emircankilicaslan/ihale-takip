@@ -22,6 +22,7 @@ Kamu kurumlarında bilişim işleri çoğunlukla Java/.NET, Oracle ve kurumsal d
 - **İhale yaşam döngüsü:** taslak → onay → ilan → teklifler → değerlendirme → karar → sözleşme (her aşamadan iptal)
 - **Onay kademeleri:** yaklaşık maliyete göre 1/2/3. kademe; birim müdürü, daire başkanı, üst yönetici
 - **Süre hesabı:** ilan süresi ve itiraz süresi takvim günüyle, hafta sonu ve resmi tatilleri atlayarak hesaplanır
+- **Arama ve süzgeçler:** ihale no veya ada göre arama (büyük/küçük harfe duyarsız), durum, usul, tür, birim ve maliyet aralığı süzgeçleri, 5 sıralama seçeneği; Excel/CSV dışa aktarma aynı süzgeçleri kullanır
 - **Teklif kuralları:** aşırı düşük teklif işareti ve komisyon kararı, yaklaşık maliyeti aşan teklifin elenmesi, en düşük uygun teklif
 - **Yetki:** 8 rol, birim bazlı görünürlük, görev ayrılığı, kademe kontrolü
 - **Kullanıcı yönetimi:** yönetici kullanıcı ekler, rol ve birim değiştirir, pasife alır; parola politikası; art arda hatalı girişte geçici kilit; parola değiştirme
@@ -170,7 +171,7 @@ Tüm uç noktalar ve istek/yanıt şemaları Swagger'dadır (`/swagger`).
 | Yöntem | Yol | Açıklama |
 | :--- | :--- | :--- |
 | POST | `/api/auth/giris` · `sifre-degistir` | Oturum aç (JWT) / parolayı değiştir |
-| GET/POST | `/api/ihaleler` | Listele (sayfalı, `durum` filtreli) / oluştur |
+| GET/POST | `/api/ihaleler` | Listele (`ara`, `durum`, `usul`, `tur`, `birimId`, `minMaliyet`, `maxMaliyet`, `sirala`, `page`, `size`; en çok 100 satır) / oluştur |
 | GET | `/api/ihaleler/ozet` | Durum sayıları ve devam eden ihalelerin toplam maliyeti |
 | POST | `/api/ihaleler/{id}/onaya-gonder` · `onayla` · `geri-cevir` | Onay akışı |
 | POST | `/api/ihaleler/{id}/ilan` | İlan ve ihale tarihi |
@@ -216,8 +217,11 @@ Yapılandırma ortam değişkenleriyle verilir: `DB_URL`, `DB_USER`, `DB_PASSWOR
 | **Birim testleri** | İş günü ve süre hesabı, onay kademesi sınırları, aşırı düşük teklif sınırları, rol seviyeleri, hesap kilidi mantığı, parola politikası, CSV ve Excel üreticileri (formül enjeksiyonu, biçim, Türkçe karakter) |
 | **Entegrasyon: ihale akışı** | Taslaktan sözleşmeye tam akış (saat ileri alınarak), onay kademesi matrisi, geri çevirme, iptal, ilan süresi sınırları, resmi tatil ekleme, teklif kuralları, aşırı düşük teklif kararları, listeleme ve sayfalama, özet |
 | **Entegrasyon: kullanıcı yönetimi** | Yetki matrisi, oluşturma ve doğrulama, pasife alma (eski anahtarın geçersiz kalması), kendi hesabını koruma, 5 hatalı girişte kilit, süre dolunca açılma, kilit açma, parola değiştirme, denetim izi |
+| **Entegrasyon: arama ve süzgeçler** | Ad ve numaraya göre arama, `LIKE` joker karakterleri ve SQL enjeksiyonu denemelerinin düz metin sayılması, süzgeç kombinasyonları, birim kapsamının süzgeçle aşılamaması, sıralama, sayfa boyutu üst sınırı, geçersiz parametreler, dışa aktarmanın aynı süzgeçleri kullanması |
 | **Entegrasyon: dışa aktarma** | CSV ve Excel içeriği, birim kapsamı, yetkiler, denetim kaydına yazılması |
 | **Entegrasyon: sözleşme ve sağlık** | Sağlık kontrolü, OpenAPI belgesi, CSP, bozuk/sahte/süresi dolmuş token, girdi doğrulama |
+
+CI ayrıca Docker imajını derler, Oracle'a karşı açıp `/actuator/health`, arayüz ve OpenAPI belgesini yoklar ve `docker-compose.yml` dosyasını doğrular.
 
 Entegrasyon testleri gerçek Oracle'a ve gerçek güvenlik zincirine karşı çalışır; her test geri alınan bir işlemde yürür ve zaman değiştirilebilir bir saatle ilerletilir. Ayrıca `tools/ekran-goruntusu` iş akışı, uygulamayı Oracle ile gerçekten çalıştırıp tarayıcıdan sürer (bu iş akışı bir hatayı yakaladı: sağlık kontrolü LDAP yüzünden DOWN dönüyordu; artık regresyon testi var).
 
@@ -226,7 +230,8 @@ Entegrasyon testleri gerçek Oracle'a ve gerçek güvenlik zincirine karşı ça
 - **Mevzuat:** eşikler ve süreler örnektir; gerçek kullanımdan önce 4734 sayılı Kanun ile doğrulanmalıdır. Kazanan seçimi yalnızca "en düşük fiyat"; ekonomik olarak en avantajlı teklif ve yaklaşık maliyet hesabı kapsam dışıdır.
 - **Resmi tatiller:** yalnızca sabit tarihli tatiller 2026-2027 için yüklüdür; dini bayramlar yönetici tarafından eklenmelidir, aksi halde o günlerdeki süre hesapları yanlış çıkar.
 - **Active Directory:** `ldap` kipi kodda var ancak gerçek bir dizine karşı denenmemiştir (CI'da dizin yok).
-- **Docker:** `Dockerfile` ve `docker-compose.yml` CI'da derlenmez; CI uygulamayı jar olarak Oracle'a karşı çalıştırır.
+- **Docker:** CI, imajı derler ve Oracle'a karşı açıp sağlık kontrolünden geçirir; `docker-compose.yml` ise yalnızca doğrulanır (söz dizimi ve değişkenler). Oracle konteyneriyle birlikte `docker compose up` akışının tamamı CI'da çalıştırılmaz.
+- **Arama:** büyük/küçük harf duyarsızlığı veritabanının karşılaştırma kurallarına bağlıdır; Türkçe İ/ı eşlemesi garanti edilmez. Metin araması tam metin indeksi değil, `LIKE` ile yapılır (büyük tablolarda indeks gerekir).
 - **Kilit yanıtı:** kilitli hesap için 423 dönmesi, hesabın varlığını dışarıya belli eder; çok kullanıcılı gerçek ortamda IP bazlı hız sınırı ek bir katman olarak eklenmelidir.
 - **Oturum:** JWT yenileme (refresh) ve çıkışta anahtarı iptal etme yoktur; anahtar 60 dakika geçerlidir.
 - **Özet:** durum sayıları bellekte hesaplanır; çok büyük veri kümesinde veritabanı `GROUP BY` sorgusuna çevrilmelidir. Dışa aktarma tek dosyada en çok 10.000 satırdır.

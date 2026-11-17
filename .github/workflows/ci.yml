@@ -34,3 +34,39 @@ jobs:
           DB_URL: jdbc:oracle:thin:@//localhost:1521/FREEPDB1
           DB_USER: ihale
           DB_PASSWORD: ci-uygulama-sifresi
+
+      - name: Docker imajı derlenir
+        run: docker build -t ihale-takip .
+
+      - name: Docker imajı Oracle'a karşı açılır (duman testi)
+        run: |
+          docker run -d --name uygulama --network host \
+            -e DB_URL=jdbc:oracle:thin:@//localhost:1521/FREEPDB1 \
+            -e DB_USER=ihale \
+            -e DB_PASSWORD=ci-uygulama-sifresi \
+            -e JWT_SECRET=ci-icin-uretilmis-en-az-32-baytlik-anahtar-degeri \
+            ihale-takip
+          for i in $(seq 1 40); do
+            if curl -sf http://localhost:8080/actuator/health | grep -q '"UP"'; then
+              echo "imaj hazır ($i)"
+              curl -sf -o /dev/null -w "arayüz: %{http_code}\n" http://localhost:8080/
+              curl -sf -o /dev/null -w "swagger belgesi: %{http_code}\n" http://localhost:8080/v3/api-docs
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "imaj açılmadı"
+          docker logs uygulama | tail -n 80
+          exit 1
+
+      - name: docker-compose.yml doğrulanır
+        run: docker compose config -q
+        env:
+          ORACLE_SYS_SIFRE: ci-sys-sifresi
+          DB_PASSWORD: ci-uygulama-sifresi
+          JWT_SECRET: ci-icin-uretilmis-en-az-32-baytlik-anahtar-degeri
+          DEMO_SIFRE: ci-demo-parolasi-2026
+
+      - name: Uygulama günlüğü (hata ayıklama)
+        if: failure()
+        run: docker logs uygulama 2>&1 | tail -n 120 || true
