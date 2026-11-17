@@ -27,6 +27,16 @@ public class Kullanici {
     @JoinColumn(name = "birim_id")
     private Birim birim;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private KullaniciDurumu durum = KullaniciDurumu.AKTIF;
+
+    @Column(name = "basarisiz_giris", nullable = false)
+    private int basarisizGiris;
+
+    @Column(name = "kilit_bitis")
+    private java.time.LocalDateTime kilitBitis;
+
     protected Kullanici() {}
 
     public Kullanici(String kullaniciAdi, String adSoyad, String sifreHash, Rol rol, Birim birim) {
@@ -43,4 +53,38 @@ public class Kullanici {
     public String getSifreHash() { return sifreHash; }
     public Rol getRol() { return rol; }
     public Birim getBirim() { return birim; }
+    public KullaniciDurumu getDurum() { return durum; }
+    public int getBasarisizGiris() { return basarisizGiris; }
+    public java.time.LocalDateTime getKilitBitis() { return kilitBitis; }
+
+    public void rolBelirle(Rol rol, Birim birim) {
+        this.rol = rol;
+        this.birim = birim;
+    }
+
+    public void durumBelirle(KullaniciDurumu durum) {
+        this.durum = durum;
+    }
+
+    public void sifreBelirle(String sifreHash) {
+        this.sifreHash = sifreHash;
+    }
+
+    public boolean kilitliMi(java.time.LocalDateTime simdi) {
+        return kilitBitis != null && kilitBitis.isAfter(simdi);
+    }
+
+    /** Hatalı girişi sayar; eşiğe ulaşılınca hesabı süreli kilitler ve sayacı sıfırlar. */
+    public void basarisizGirisKaydet(java.time.LocalDateTime simdi, int esik, int kilitDakika) {
+        basarisizGiris++;
+        if (basarisizGiris >= esik) {
+            kilitBitis = simdi.plusMinutes(kilitDakika);
+            basarisizGiris = 0;
+        }
+    }
+
+    public void basariliGirisKaydet() {
+        basarisizGiris = 0;
+        kilitBitis = null;
+    }
 }

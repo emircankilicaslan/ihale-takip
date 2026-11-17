@@ -31,6 +31,9 @@ public class JwtFiltresi extends OncePerRequestFilter {
                 try {
                     // Rol ve birim her istekte veritabanından okunur: yetki değişikliği hemen etkili olur.
                     KullaniciDetay detay = kullanicilar.loadUserByUsername(ad);
+                    if (!detay.isEnabled()) {
+                        return; // pasife alınmış kullanıcının eski anahtarı artık işe yaramaz
+                    }
                     var kimlik = UsernamePasswordAuthenticationToken.authenticated(
                             detay, null, detay.getAuthorities());
                     SecurityContextHolder.getContext().setAuthentication(kimlik);

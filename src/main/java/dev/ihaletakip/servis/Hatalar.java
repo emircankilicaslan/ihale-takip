@@ -11,6 +11,13 @@ public final class Hatalar {
         }
     }
 
+    /** Hesap art arda hatalı giriş nedeniyle geçici kilitli: 423. */
+    public static class HesapKilitli extends RuntimeException {
+        public HesapKilitli(String mesaj) {
+            super(mesaj);
+        }
+    }
+
     /** Kayıt yok: 404. */
     public static class KayitBulunamadi extends RuntimeException {
         public KayitBulunamadi(String mesaj) {

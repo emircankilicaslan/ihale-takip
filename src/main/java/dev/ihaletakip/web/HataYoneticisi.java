@@ -21,6 +21,11 @@ public class HataYoneticisi {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, e.getMessage());
     }
 
+    @ExceptionHandler(dev.ihaletakip.servis.Hatalar.HesapKilitli.class)
+    public ProblemDetail kilitli(dev.ihaletakip.servis.Hatalar.HesapKilitli e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.LOCKED, e.getMessage());
+    }
+
     @ExceptionHandler(KayitBulunamadi.class)
     public ProblemDetail yok(KayitBulunamadi e) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());

@@ -17,6 +17,11 @@ import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAu
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
 
 @Configuration
 @EnableMethodSecurity
@@ -30,9 +35,17 @@ public class GuvenlikAyari {
                         .requestMatchers("/api/auth/giris", "/actuator/health").permitAll()
                         // Arayüz dosyaları herkese açıktır; veri yalnızca /api üzerinden ve oturumla gelir.
                         .requestMatchers("/", "/index.html", "/app.js", "/style.css", "/favicon.ico").permitAll()
+                        // API sözleşmesi (Swagger arayüzü ve OpenAPI belgesi) açıktır; uç noktalar yine oturum ister.
+                        .requestMatchers("/swagger", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())
-                .headers(h -> h.contentSecurityPolicy(
-                        c -> c.policyDirectives("default-src 'self'; frame-ancestors 'none'; base-uri 'self'")))
+                // Kendi arayüzümüz sıkı CSP ile sunulur; Swagger arayüzü satır içi stil kullandığı için hariçtir.
+                .headers(h -> h.addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
+                        new NegatedRequestMatcher(new OrRequestMatcher(
+                                new AntPathRequestMatcher("/swagger"),
+                                new AntPathRequestMatcher("/swagger-ui/**"),
+                                new AntPathRequestMatcher("/v3/api-docs/**"))),
+                        new StaticHeadersWriter("Content-Security-Policy",
+                                "default-src 'self'; frame-ancestors 'none'; base-uri 'self'"))))
                 .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .addFilterBefore(jwtFiltresi, UsernamePasswordAuthenticationFilter.class);
         return http.build();

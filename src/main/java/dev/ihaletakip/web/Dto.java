@@ -14,6 +14,21 @@ public final class Dto {
 
     public record GirisYaniti(String token, String kullaniciAdi, String adSoyad, Rol rol) {}
 
+    public record SifreDegistirIstegi(@NotBlank String mevcutSifre, @NotBlank @Size(max = 200) String yeniSifre) {}
+
+    public record KullaniciOlusturIstegi(
+            @NotBlank @Pattern(regexp = "[A-Za-z0-9._-]{3,100}",
+                    message = "3-100 karakter; harf, rakam, nokta, alt çizgi ve tire kullanılabilir") String kullaniciAdi,
+            @NotBlank @Size(max = 200) String adSoyad,
+            @Size(max = 200) String sifre,
+            @NotNull Rol rol,
+            Long birimId) {}
+
+    public record KullaniciGuncelleIstegi(@NotNull Rol rol, Long birimId, @NotNull KullaniciDurumu durum) {}
+
+    public record KullaniciYaniti(
+            Long id, String kullaniciAdi, String adSoyad, Rol rol, String birim, KullaniciDurumu durum, boolean kilitli) {}
+
     public record IhaleOlusturIstegi(
             @NotBlank @Size(max = 300) String ad,
             @NotNull IhaleUsulu usul,

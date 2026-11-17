@@ -32,4 +32,10 @@ public class KullaniciDetay implements UserDetails {
     public String getUsername() {
         return kullanici.getKullaniciAdi();
     }
+
+    /** Pasife alınan kullanıcı giriş yapamaz; mevcut oturum anahtarı da geçersiz sayılır. */
+    @Override
+    public boolean isEnabled() {
+        return kullanici.getDurum() == dev.ihaletakip.domain.KullaniciDurumu.AKTIF;
+    }
 }
