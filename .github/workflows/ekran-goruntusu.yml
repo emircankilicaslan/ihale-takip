@@ -1,0 +1,82 @@
+name: Ekran görüntüleri
+
+# Uygulamayı Oracle ile ayağa kaldırır, kurgusal örnek veriyi gerçek kurallardan geçirerek yükler
+# ve README'deki ekran görüntülerini tarayıcıdan alır. Elle tetiklenir; iş gününde çalıştırın.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  goruntu:
+    runs-on: ubuntu-latest
+    services:
+      oracle:
+        image: gvenzl/oracle-free:23-slim-faststart
+        env:
+          ORACLE_PASSWORD: ci-sys-sifresi
+          APP_USER: ihale
+          APP_USER_PASSWORD: ci-uygulama-sifresi
+        ports:
+          - 1521:1521
+        options: >-
+          --health-cmd healthcheck.sh
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 30
+    env:
+      DB_URL: jdbc:oracle:thin:@//localhost:1521/FREEPDB1
+      DB_USER: ihale
+      DB_PASSWORD: ci-uygulama-sifresi
+      JWT_SECRET: ci-icin-uretilmis-en-az-32-baytlik-anahtar-degeri
+      DEMO_SIFRE: ci-demo-parolasi-2026
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Uygulamayı derle
+        run: mvn -B -q package -DskipTests
+
+      - name: Uygulamayı başlat (dev profili)
+        run: |
+          nohup java -jar target/ihale-takip-0.1.0.jar --spring.profiles.active=dev > uygulama.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8080/actuator/health > /dev/null; then echo "hazır ($i)"; exit 0; fi
+            sleep 3
+          done
+          echo "uygulama açılmadı"; tail -n 80 uygulama.log; exit 1
+
+      - name: Tarayıcı araçlarını kur
+        working-directory: tools/ekran-goruntusu
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: Örnek veriyi yükle
+        working-directory: tools/ekran-goruntusu
+        run: node seed.mjs
+
+      - name: Ekran görüntülerini al
+        working-directory: tools/ekran-goruntusu
+        run: node goruntu.mjs
+
+      - name: Görüntüleri depoya işle
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/screenshots
+          if git diff --cached --quiet; then echo "değişiklik yok"; exit 0; fi
+          git commit -m "Ekran görüntüleri çalışan uygulamadan yeniden üretildi"
+          git push
+
+      - name: Uygulama günlüğü (hata ayıklama)
+        if: failure()
+        run: tail -n 120 uygulama.log

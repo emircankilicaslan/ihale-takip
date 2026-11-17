@@ -229,9 +229,26 @@ function girisSayfasi() {
 
 async function listeSayfasi(sayfa = 0, durum = '') {
   const yol = '/api/ihaleler?size=' + SAYFA_BOYUTU + '&page=' + sayfa + (durum ? '&durum=' + durum : '');
-  const veri = await api(yol);
+  const [veri, ozet] = await Promise.all([api(yol), api('/api/ihaleler/ozet')]);
 
-  const filtre = el('select', { 'aria-label': 'Duruma göre filtrele' },
+  const kart = (etiket, deger, hedefDurum) => {
+    const icerikKart = [el('span', { sinif: 'ozet-etiket' }, etiket), el('span', { sinif: 'ozet-deger' }, deger)];
+    if (hedefDurum === undefined) return el('div', { sinif: 'ozet-kart' }, icerikKart);
+    return el('button', {
+      type: 'button',
+      sinif: 'ozet-kart' + (hedefDurum === durum ? ' secili' : ''),
+      'aria-pressed': hedefDurum === durum ? 'true' : 'false',
+      onclick: () => listeSayfasi(0, hedefDurum).catch(hataGoster),
+    }, icerikKart);
+  };
+  const ozetKartlari = el('div', { sinif: 'ozet' },
+    kart('Tüm ihaleler', ozet.toplam, ''),
+    kart('Onay bekliyor', ozet.durumlar.ONAY_BEKLIYOR, 'ONAY_BEKLIYOR'),
+    kart('İlanda', ozet.durumlar.ILANDA, 'ILANDA'),
+    kart('Değerlendirmede', ozet.durumlar.DEGERLENDIRMEDE, 'DEGERLENDIRMEDE'),
+    kart('Devam eden ihalelerin yaklaşık maliyeti', para.format(ozet.devamEdenYaklasikMaliyet)));
+
+  const filtre =el('select', { 'aria-label': 'Duruma göre filtrele' },
     el('option', { value: '' }, 'Tüm durumlar'),
     Object.entries(DURUM).map(([k, v]) => el('option', { value: k, selected: k === durum }, v)));
   filtre.addEventListener('change', () => listeSayfasi(0, filtre.value).catch(hataGoster));
@@ -269,7 +286,7 @@ async function listeSayfasi(sayfa = 0, durum = '') {
     el('button', { type: 'button', sinif: 'ikincil kucuk', disabled: veri.last,
       onclick: () => listeSayfasi(sayfa + 1, durum).catch(hataGoster) }, 'Sonraki'));
 
-  icerik().replaceChildren(el('h2', null, 'İhaleler'), arac, govde, sayfalama);
+  icerik().replaceChildren(el('h2', null, 'İhaleler'), ozetKartlari, arac, govde, sayfalama);
 }
 
 async function yeniIhale() {

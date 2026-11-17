@@ -31,6 +31,11 @@ public class IhaleController {
         return servis.listele(k.kullanici(), durum, sayfa);
     }
 
+    @GetMapping("/ozet")
+    public OzetYaniti ozet(@AuthenticationPrincipal KullaniciDetay k) {
+        return servis.ozet(k.kullanici());
+    }
+
     @GetMapping("/{id}")
     public IhaleYaniti getir(@AuthenticationPrincipal KullaniciDetay k, @PathVariable Long id) {
         return servis.getir(k.kullanici(), id);

@@ -55,6 +55,8 @@ public final class Dto {
             LocalDate itirazSonTarihi,
             String gerekce) {}
 
+    public record OzetYaniti(long toplam, java.util.Map<IhaleDurumu, Long> durumlar, BigDecimal devamEdenYaklasikMaliyet) {}
+
     public record TeklifYaniti(
             Long id,
             String istekliAdi,

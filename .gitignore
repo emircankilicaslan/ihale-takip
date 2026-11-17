@@ -4,3 +4,7 @@ target/
 .idea/
 .vscode/
 *.iml
+
+tools/**/node_modules/
+tools/**/package-lock.json
+tools/**/kimlikler.json

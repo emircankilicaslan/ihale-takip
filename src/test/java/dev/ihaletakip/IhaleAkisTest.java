@@ -248,6 +248,21 @@ class IhaleAkisTest {
     }
 
     @Test
+    void ozetKullanicininGordugucuKayitlardanHesaplanir() throws Exception {
+        long id = ihaleOlustur("t_sorumlu", "100000");
+        gonder("t_sorumlu", "/api/ihaleler/" + id + "/onaya-gonder", null).andExpect(status().isOk());
+        mvc.perform(get("/api/ihaleler/ozet").header("Authorization", "Bearer " + giris("t_uzman")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.toplam").value(1))
+                .andExpect(jsonPath("$.durumlar.ONAY_BEKLIYOR").value(1))
+                .andExpect(jsonPath("$.durumlar.TASLAK").value(0))
+                .andExpect(jsonPath("$.devamEdenYaklasikMaliyet").value(100000.0));
+        // Başka birimin sorumlusu bu ihaleyi özetinde görmez
+        mvc.perform(get("/api/ihaleler/ozet").header("Authorization", "Bearer " + giris("t_baska_sorumlu")))
+                .andExpect(jsonPath("$.toplam").value(0));
+    }
+
+    @Test
     void yanlisParolaDetaysizReddedilir() throws Exception {
         mvc.perform(post("/api/auth/giris").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"kullaniciAdi\":\"t_sorumlu\",\"sifre\":\"yanlis\"}"))

@@ -9,11 +9,14 @@ import dev.ihaletakip.servis.Hatalar.IsKuraliIhlali;
 import dev.ihaletakip.servis.Hatalar.KayitBulunamadi;
 import dev.ihaletakip.web.Dto.*;
 import jakarta.persistence.criteria.Predicate;
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -57,7 +60,32 @@ public class IhaleServisi {
 
     @Transactional(readOnly = true)
     public Page<IhaleYaniti> listele(Kullanici k, IhaleDurumu durum, Pageable sayfa) {
-        Specification<Ihale> kosul = (kok, sorgu, cb) -> {
+        IsGunuTakvimi takvim = takvim();
+        return ihaleler.findAll(kapsam(k, durum), sayfa).map(i -> yanit(i, takvim));
+    }
+
+    /** Durumlara göre adetler ve devam eden ihalelerin toplam yaklaşık maliyeti; kullanıcının görebildiği kayıtlar üzerinden. */
+    @Transactional(readOnly = true)
+    public OzetYaniti ozet(Kullanici k) {
+        Map<IhaleDurumu, Long> durumlar = new EnumMap<>(IhaleDurumu.class);
+        for (IhaleDurumu d : IhaleDurumu.values()) {
+            durumlar.put(d, 0L);
+        }
+        BigDecimal devamEden = BigDecimal.ZERO;
+        long toplam = 0;
+        for (Ihale i : ihaleler.findAll(kapsam(k, null))) {
+            toplam++;
+            durumlar.merge(i.getDurum(), 1L, Long::sum);
+            if (!i.getDurum().sonDurum()) {
+                devamEden = devamEden.add(i.getYaklasikMaliyet());
+            }
+        }
+        return new OzetYaniti(toplam, durumlar, devamEden);
+    }
+
+    /** Birim ile sınırlı roller yalnızca kendi birimini görür; isteğe bağlı durum filtresi. */
+    private Specification<Ihale> kapsam(Kullanici k, IhaleDurumu durum) {
+        return (kok, sorgu, cb) -> {
             List<Predicate> p = new ArrayList<>();
             if (durum != null) {
                 p.add(cb.equal(kok.get("durum"), durum));
@@ -71,8 +99,6 @@ public class IhaleServisi {
             }
             return cb.and(p.toArray(new Predicate[0]));
         };
-        IsGunuTakvimi takvim = takvim();
-        return ihaleler.findAll(kosul, sayfa).map(i -> yanit(i, takvim));
     }
 
     @Transactional(readOnly = true)
