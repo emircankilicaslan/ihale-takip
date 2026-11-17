@@ -13,12 +13,19 @@ spring:
     enabled: true
   jackson:
     default-property-inclusion: non_null
+  autoconfigure:
+    # LDAP yalnızca "ldap" kipinde ve doğrudan Active Directory sağlayıcısıyla kullanılır;
+    # Spring Boot'un varsayılan LDAP bağlantısı (localhost:389) kurulmasın.
+    exclude: org.springframework.boot.autoconfigure.ldap.LdapAutoConfiguration
 
 management:
   endpoints:
     web:
       exposure:
         include: health
+  health:
+    ldap:
+      enabled: false
 
 ihale:
   kimlik:
