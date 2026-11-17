@@ -70,7 +70,7 @@ class SozlesmeVeSaglikTest extends EntegrasyonTemeli {
         mvc.perform(get("/api/ihaleler").header("Authorization", "Bearer " + bozukImza))
                 .andExpect(status().isUnauthorized());
         // Yük (payload) değiştirilirse imza artık uymaz
-        String[] parcalar = gecerli.split("\.");
+        String[] parcalar = gecerli.split("\\.");
         String sahteYuk = java.util.Base64.getUrlEncoder().withoutPadding()
                 .encodeToString("{\"sub\":\"t_admin\",\"exp\":9999999999}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
         mvc.perform(get("/api/kullanicilar").header("Authorization", "Bearer " + parcalar[0] + "." + sahteYuk + "." + parcalar[2]))
