@@ -335,7 +335,9 @@ async function detaySayfasi(id) {
     .then((tamam) => { if (tamam) yenile(); });
 
   const eylemler = [];
-  const dugme = (etiket, calistir, sinif) => eylemler.push(el('button', { type: 'button', sinif: sinif || false, onclick: calistir }, etiket));
+  const dugme = (etiket, calistir, sinif, pasifNedeni) => eylemler.push(el('button', {
+    type: 'button', sinif: sinif || false, onclick: calistir, disabled: !!pasifNedeni, title: pasifNedeni || false,
+  }, etiket));
 
   if (ihale.durum === 'TASLAK' && yetki('BIRIM_SORUMLUSU', 'SATIN_ALMA_UZMANI')) {
     dugme('Onaya gönder', () => post('/onaya-gonder', undefined, 'Onaya gönderildi'));
@@ -370,7 +372,10 @@ async function detaySayfasi(id) {
     dugme('Değerlendirmeye al', () => post('/degerlendirmeye-al', undefined, 'Değerlendirmeye alındı'), 'ikincil');
   }
   if (ihale.durum === 'KARARLANDI' && yetki('SATIN_ALMA_UZMANI')) {
-    dugme('Sözleşme imzalandı', () => post('/sozlesme', undefined, 'Sözleşme işlendi'));
+    const bugun = new Date().toLocaleDateString('sv-SE'); // YYYY-AA-GG, yerel saat
+    const bekleniyor = ihale.itirazSonTarihi && bugun <= ihale.itirazSonTarihi;
+    dugme('Sözleşme imzalandı', () => post('/sozlesme', undefined, 'Sözleşme işlendi'), false,
+      bekleniyor ? 'İtiraz süresi ' + tarih(ihale.itirazSonTarihi) + ' tarihinde bitiyor' : false);
   }
   if (!['SOZLESME_IMZALANDI', 'IPTAL'].includes(ihale.durum) && yetki('DAIRE_BASKANI', 'UST_YONETICI')) {
     dugme('İptal et', async () => {

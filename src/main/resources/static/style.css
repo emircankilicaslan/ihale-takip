@@ -168,6 +168,7 @@ dialog menu { display: flex; justify-content: flex-end; gap: 8px; margin: 16px 0
 
 .ozet { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px; }
 .ozet-kart {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -182,4 +183,4 @@ dialog menu { display: flex; justify-content: flex-end; gap: 8px; margin: 16px 0
 button.ozet-kart:hover { border-color: var(--vurgu); filter: none; }
 .ozet-kart.secili { border-color: var(--vurgu); box-shadow: inset 0 0 0 1px var(--vurgu); }
 .ozet-etiket { color: var(--soluk); font-size: 13px; }
-.ozet-deger { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ozet-deger { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }

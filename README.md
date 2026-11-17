@@ -6,6 +6,8 @@ Kamu ihale süreçlerini baştan sona izleyen REST API ve web arayüzü: taslakt
 
 [![CI](https://github.com/emircankilicaslan/ihale-takip/actions/workflows/ci.yml/badge.svg)](https://github.com/emircankilicaslan/ihale-takip/actions/workflows/ci.yml)
 
+![Genel bakış](docs/screenshots/arayuz-genel-bakis.jpg)
+
 > **Doğrulama:** Her push'ta GitHub Actions, Oracle Free servis konteynerine karşı 20 testi (birim ve uçtan uca akış) çalıştırır.
 >
 > **Mevzuat uyarısı:** Bu bir portfolyo/demo projesidir, hukuki danışmanlık değildir. Onay sınırları, ilan süreleri ve itiraz süresi **örnek değerlerdir** ve `application.yml` içinden ayarlanır; gerçek bir kurumda 4734 sayılı Kanun ve ilgili mevzuat ile doğrulanmalıdır. Kazanan seçimi "en düşük fiyat" olarak sadeleştirilmiştir.
@@ -85,13 +87,32 @@ curl -X POST localhost:8080/api/auth/giris -H "Content-Type: application/json" \
 
 ## Web arayüzü
 
-Uygulama açıldığında (`http://localhost:8080`) tarayıcıdan kullanılabilir. Derleme adımı ve dış kütüphane yoktur: düz HTML/CSS/JS, Spring Boot içinden servis edilir.
+Uygulama açıldığında kök adres (`/`) bir çalışma paneli sunar. Derleme adımı ve dış kütüphane yoktur: dosyalar `src/main/resources/static` altındadır (sade HTML, CSS ve JavaScript).
 
-- Giriş, durum filtreli ve sayfalı ihale listesi, ihale detayı
-- Rol ve duruma göre görünen işlem düğmeleri (onayla, ilan et, teklif ekle, kazanan seç, iptal...). Yetki kararını her zaman sunucu verir; arayüz yalnızca uygun düğmeleri gösterir ve sunucunun hata mesajını iletir
-- Teklif tablosu: aşırı düşük teklif rozeti, komisyon kararları
-- Denetçi, yönetici ve üst yönetici için denetim kaydı sayfası
-- Gizlilik: metinler `textContent` ile yazılır (XSS'e karşı), `Content-Security-Policy` yalnızca kendi kaynağına izin verir, oturum anahtarı sekme kapanınca silinir (`sessionStorage`), koyu tema ve dar ekran desteği vardır
+![Genel bakış](docs/screenshots/arayuz-genel-bakis.jpg)
+
+- **Genel bakış:** durum kartları (tıklayınca ilgili listeyi açar), devam eden ihalelerin toplam yaklaşık maliyeti; kullanıcı yalnızca yetkili olduğu kayıtları görür
+- **İhale listesi:** durum filtresi ve sayfalama; durum rozetleri
+- **Rol ve duruma göre işlemler:** onayla / geri çevir, ilan et, teklif ekle, kazanan seç, iptal. Yetki kararını her zaman sunucu verir; arayüz yalnızca uygun düğmeleri gösterir ve sunucunun hata mesajını olduğu gibi iletir. İtiraz süresi dolmadan sözleşme düğmesi pasif kalır
+- **Denetçi, yönetici ve üst yönetici:** değiştirilemez denetim kaydı sayfası (ihaleye göre süzülebilir)
+
+![Teklif değerlendirme: aşırı düşük teklif işaretli, komisyon kararları](docs/screenshots/arayuz-teklif-degerlendirme.jpg)
+
+![Karara bağlanmış ihale: kazanan teklif ve itiraz süresi sonu](docs/screenshots/arayuz-karar-itiraz.jpg)
+
+| Onay bekleyen ihale (daire başkanı) | Yeni ihale |
+|---|---|
+| ![Onay](docs/screenshots/arayuz-onay.jpg) | ![Yeni ihale](docs/screenshots/arayuz-yeni-ihale.jpg) |
+
+![Denetim kaydı (denetçi)](docs/screenshots/arayuz-denetim-kaydi.jpg)
+
+| Giriş | Koyu tema | Mobil |
+|---|---|---|
+| ![Giriş](docs/screenshots/arayuz-giris.jpg) | ![Koyu tema](docs/screenshots/arayuz-koyu-tema.jpg) | <img src="docs/screenshots/arayuz-mobil.jpg" width="200" alt="Mobil görünüm"> |
+
+Güvenlik: metinler `textContent` ile yazılır (`innerHTML` yok), sayfa `Content-Security-Policy` ile sunulur ve satır içi betik/stil kullanmaz. Oturum anahtarı `sessionStorage`'da tutulur ve sekme kapanınca silinir.
+
+**Ekran görüntüleri çalışan uygulamadan alınır.** GitHub Actions'taki *Ekran görüntüleri* iş akışı uygulamayı Oracle ile ayağa kaldırır, kurgusal örnek veriyi API üzerinden (tüm iş kurallarından geçirerek) yükler ve tarayıcıdan görüntüleri alır (`tools/ekran-goruntusu`). Görüntülerdeki firma, kişi ve tutarların tümü kurgusaldır.
 
 ## Test
 
