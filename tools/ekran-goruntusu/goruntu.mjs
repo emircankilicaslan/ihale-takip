@@ -60,6 +60,14 @@ async function cek(sayfa, ad, secenek = {}) {
   await girisYap(s, 'uzman');
   await cek(s, 'arayuz-genel-bakis', { fullPage: true });
 
+  // Arama ve süzgeçler
+  await s.fill('input[type=search]', 'yenileme');
+  await s.press('input[type=search]', 'Enter');
+  await s.waitForSelector('text=Toplam 3 kayıt');
+  await cek(s, 'arayuz-arama', { fullPage: true });
+  await s.click('text=Süzgeçleri temizle');
+  await s.waitForSelector('text=Toplam 7 kayıt');
+
   await s.click('text=Yeni ihale');
   await s.fill('#alan-ad', 'Laboratuvar Sarf Malzemesi Alımı');
   await s.fill('#alan-yaklasikMaliyet', '540000');
