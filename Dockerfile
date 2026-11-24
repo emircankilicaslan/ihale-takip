@@ -5,7 +5,7 @@ RUN mvn -B -q dependency:go-offline
 COPY src ./src
 RUN mvn -B -q package -DskipTests
 
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:25-jre
 WORKDIR /uygulama
 RUN useradd --system --no-create-home uygulama
 COPY --from=derle /uygulama/target/ihale-takip-*.jar uygulama.jar
