@@ -47,6 +47,12 @@ ihale:
     kilit-esigi: 5               # art arda bu kadar hatalı girişte hesap geçici kilitlenir
     kilit-dakika: 15
     sifre-min-uzunluk: 10
+  hiz-siniri:
+    etkin: true
+    giris-dakika: 10             # istemci (IP) başına dakikada giriş denemesi
+    yazma-dakika: 120            # POST/PUT/PATCH/DELETE
+    okuma-dakika: 600            # GET/HEAD/OPTIONS
+    guvenilir-vekil: false       # true: istemci adresi X-Forwarded-For başlığındaki son girdidir (yalnızca güvenilir ters vekil arkasında açın)
   # Aşağıdaki sayısal değerler ÖRNEKTİR. Kurum, kendi mevzuat ve yetki devri
   # düzenlemesine göre değiştirmelidir; koda gömülü kural yoktur.
   kurallar:

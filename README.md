@@ -99,6 +99,7 @@ TASLAK → ONAY_BEKLIYOR → ONAYLANDI → ILANDA → DEGERLENDIRMEDE → KARARL
 | **İtiraz süresi** | Karar tarihinden itibaren süre dolmadan sözleşme imzalanamaz; süre tatile/hafta sonuna denk gelirse sonraki iş gününe uzar. |
 | **Eşzamanlılık** | İyimser kilit (`@Version`): aynı ihaleyi iki kişi aynı anda ilerletemez (409). |
 | **Hesap güvenliği** | 5 art arda hatalı girişte hesap 15 dakika kilitlenir (ayarlanabilir); parola en az 10 karakter, harf ve rakam içermeli; yönetici kendi hesabını pasife alamaz. |
+| **İstek hız sınırı** | `/api` istekleri istemci (IP) bazlı dakikada sınırlanır: giriş 10, yazma 120, okuma 600; aşımda `429` + `Retry-After`. Arayüz ve `/actuator/health` muaftır. Değerler `ihale.hiz-siniri.*` ile değişir; ters vekil arkasında `guvenilir-vekil=true` ile `X-Forwarded-For` son girdisi kullanılır. Sayaçlar bellektedir (tek uygulama örneği). |
 
 ## Veritabanı şeması
 
@@ -235,7 +236,7 @@ Entegrasyon testleri gerçek Oracle'a ve gerçek güvenlik zincirine karşı ça
 - **Active Directory:** `ldap` kipi kodda var ancak gerçek bir dizine karşı denenmemiştir (CI'da dizin yok).
 - **Docker:** CI, imajı derler ve Oracle'a karşı açıp sağlık kontrolünden geçirir; `docker-compose.yml` ise yalnızca doğrulanır (söz dizimi ve değişkenler). Oracle konteyneriyle birlikte `docker compose up` akışının tamamı CI'da çalıştırılmaz.
 - **Arama:** büyük/küçük harf duyarsızlığı veritabanının karşılaştırma kurallarına bağlıdır; Türkçe İ/ı eşlemesi garanti edilmez. Metin araması tam metin indeksi değil, `LIKE` ile yapılır (büyük tablolarda indeks gerekir).
-- **Kilit yanıtı:** kilitli hesap için 423 dönmesi, hesabın varlığını dışarıya belli eder; çok kullanıcılı gerçek ortamda IP bazlı hız sınırı ek bir katman olarak eklenmelidir.
+- **Kilit yanıtı:** kilitli hesap için 423 dönmesi, hesabın varlığını dışarıya belli eder; bunu hafifletmek için IP bazlı hız sınırı uygulanır (`ihale.hiz-siniri.*`); sayaçlar bellektedir, çok örnekli kurulumda paylaşımlı bir depo gerekir.
 - **Oturum:** JWT yenileme (refresh) ve çıkışta anahtarı iptal etme yoktur; anahtar 60 dakika geçerlidir.
 - **Özet:** durum sayıları bellekte hesaplanır; çok büyük veri kümesinde veritabanı `GROUP BY` sorgusuna çevrilmelidir. Dışa aktarma tek dosyada en çok 10.000 satırdır.
 - Belge yükleme, e-imza/EKAP entegrasyonu ve e-posta bildirimi bu sürümde yoktur.

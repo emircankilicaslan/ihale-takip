@@ -1,3 +1,8 @@
 ihale:
   jwt:
     gizli-anahtar: test-icin-uretilmis-en-az-32-baytlik-anahtar-degeri
+  hiz-siniri:
+    # Çalışan testler tek adresten çok sayıda istek yapar; sınır yalnızca HizSiniriTest içinde düşürülür.
+    giris-dakika: 1000000
+    yazma-dakika: 1000000
+    okuma-dakika: 1000000
