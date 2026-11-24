@@ -28,7 +28,7 @@ import org.springframework.security.web.util.matcher.OrRequestMatcher;
 public class GuvenlikAyari {
 
     @Bean
-    public SecurityFilterChain filtreZinciri(HttpSecurity http, JwtFiltresi jwtFiltresi) throws Exception {
+    public SecurityFilterChain filtreZinciri(HttpSecurity http, JwtFiltresi jwtFiltresi, IstekHizSiniri hizSiniri) throws Exception {
         http.csrf(c -> c.disable())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(a -> a
@@ -47,6 +47,7 @@ public class GuvenlikAyari {
                         new StaticHeadersWriter("Content-Security-Policy",
                                 "default-src 'self'; frame-ancestors 'none'; base-uri 'self'"))))
                 .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                .addFilterBefore(new HizSiniriFiltresi(hizSiniri), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFiltresi, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
