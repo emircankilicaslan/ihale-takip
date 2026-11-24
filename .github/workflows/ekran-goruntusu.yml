@@ -32,7 +32,7 @@ jobs:
       JWT_SECRET: ci-icin-uretilmis-en-az-32-baytlik-anahtar-degeri
       DEMO_SIFRE: ci-demo-parolasi-2026
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
