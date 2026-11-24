@@ -229,6 +229,8 @@ CI ayrıca Docker imajını derler, Oracle'a karşı açıp `/actuator/health`, 
 
 Entegrasyon testleri gerçek Oracle'a ve gerçek güvenlik zincirine karşı çalışır; her test geri alınan bir işlemde yürür ve zaman değiştirilebilir bir saatle ilerletilir. Ayrıca `tools/ekran-goruntusu` iş akışı, uygulamayı Oracle ile gerçekten çalıştırıp tarayıcıdan sürer (bu iş akışı bir hatayı yakaladı: sağlık kontrolü LDAP yüzünden DOWN dönüyordu; artık regresyon testi var).
 
+**Kapsam:** `mvn verify` JaCoCo raporunu `target/site/jacoco/index.html` altında üretir. CI satır kapsamını iş akışı özetine yazar ve raporu `jacoco-raporu` artifact olarak yükler.
+
 ## Bilinen sınırlar / sonraki adımlar
 
 - **Mevzuat:** eşikler ve süreler örnektir; gerçek kullanımdan önce 4734 sayılı Kanun ile doğrulanmalıdır. Kazanan seçimi yalnızca "en düşük fiyat"; ekonomik olarak en avantajlı teklif ve yaklaşık maliyet hesabı kapsam dışıdır.
